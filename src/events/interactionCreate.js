@@ -1,6 +1,8 @@
 require("colors");
 const { Events, Client, Interaction, EmbedBuilder } = require("discord.js");
 
+const cooldowns = new Map();
+
 module.exports = {
   name: Events.InteractionCreate,
   /**
@@ -21,6 +23,27 @@ module.exports = {
     if (!command) return;
 
     const embed = new EmbedBuilder();
+
+    if (cooldowns.has(interaction.commandName)) {
+      const cooldownTime = cooldowns.get(interaction.commandName);
+      const currentTime = Date.now();
+      const timeLeft = (cooldownTime - currentTime) / 1000;
+
+      if (timeLeft > 0) {
+        return interaction.reply({
+          embeds: [
+            embed
+              .setColor(config.errorColor)
+              .setDescription(
+                `${config.emojis.error} **Please wait ${timeLeft.toFixed(
+                  1
+                )} more seconds before reusing this command.**`
+              ),
+          ],
+          ephemeral: true,
+        });
+      }
+    }
 
     if (command.memberPerms) {
       if (!interaction.member.permissions.has(command.memberPerms)) {
@@ -55,7 +78,17 @@ module.exports = {
     }
 
     try {
+      cooldowns.set(
+        interaction.commandName,
+        Date.now() + command.cooldown * 1000 // Convert seconds to milliseconds
+      );
+
       await command.execute(interaction, client);
+
+      // Remove the cooldown after the specified cooldown time
+      setTimeout(() => {
+        cooldowns.delete(interaction.commandName);
+      }, command.cooldown * 1000); // Convert seconds to milliseconds
     } catch (error) {
       console.log(`Command Error - ${error}`.red);
       await interaction.deferReply({ ephemeral: true }).catch(() => {});
