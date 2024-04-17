@@ -28,13 +28,18 @@ for (const handler of handlerFolder) {
 
 // mention respond
 client.on('messageCreate', async (message) => {
-  if (message.author.bot) return false;
+  if (message.author.bot) return;
 
-  if (message.content.includes("@here") || message.content.includes("@everyone") || message.type == "REPLY") return false;
+  const mentionsEveryone = message.mentions.everyone;
+  const mentionsHere = message.content.includes("@here");
+  const isReplyMention = message.type === "REPLY";
+
+  if (mentionsEveryone || mentionsHere || isReplyMention) return;
+
   if (message.mentions.has(client.user.id)) {
     const embed = new EmbedBuilder()
-    .setTitle(`Hello, I'm Moderation-Bot Template Did you ping me?`)
-    .setDescription(`Need help? Try </help:1202269962148782141>\n\ `)
+    .setTitle(`Hello, I'm Template. Did you ping me?`)
+    .setDescription(`Need help? Try </help:1230092671469486081>\n\ `)
     .setColor(0xFFFFFF)
     .setFooter({text: "Made by Grezaski"})
 
